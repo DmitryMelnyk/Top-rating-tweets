@@ -1,9 +1,14 @@
 package dmelnyk.tweetsSearcher.ui.search;
 
 import android.os.Bundle;
-import android.support.v7.app.ActionBar;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jakewharton.rxbinding2.widget.RxTextView;
@@ -19,6 +24,7 @@ import io.reactivex.Observable;
 
 public class SearchActivity extends AppCompatActivity implements Contract.ISearchView {
 
+    private final int ANIM_DURATION = 5000; // duration time of animation in milliseconds
     private final String FRAGMENT_TAG = this.getClass().getSimpleName() + "retain fragment";
 
     @Inject
@@ -28,6 +34,9 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
     EditText searchField;
 
     RetainFragment retainFragment;
+    private EditText searchText;
+    private SearchView searchView;
+    private MenuItem searchItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,18 +50,30 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
 
         instantiateRetainFragment();
         instantiateViews();
-        instantiateToolbar();
     }
 
     @Override
     protected void onStop() {
         retainFragment.savePresenter(presenter);
+        presenter.unbindView();
         super.onStop();
     }
 
-    private void instantiateToolbar() {
-        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
-        getSupportActionBar().setCustomView(R.layout.action_edit_text_search);
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+
+        searchItem = menu.findItem(R.id.actionSearch);
+        searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+
+        searchText = (EditText) searchView.findViewById(
+                android.support.v7.appcompat.R.id.search_src_text);
+
+        // creating Observable from SearchView's text
+        Observable<CharSequence> observable = RxTextView.textChanges(searchText);
+        presenter.loadTweets(observable);
+
+        return super.onCreateOptionsMenu(menu);
     }
 
     private void instantiateRetainFragment() {
@@ -72,22 +93,28 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
 
     private void instantiateViews() {
         Observable<CharSequence> textChanged = RxTextView.textChanges(searchField);
-        presenter.loadTweets(textChanged);
+        presenter.forwardInputData(textChanged);
     }
 
     @Override
     public void onAnimateSearchView() {
-//        int height = getWindowManager().getDefaultDisplay().getMetrics(new DisplayMetrics());
         searchField.animate()
-                .translationY(-600)
-                .setDuration(2500)
+                .alpha(0) // disappearing
+                .setDuration(ANIM_DURATION)
                 .start();
-        Toast.makeText(this, "animation!", Toast.LENGTH_SHORT).show();
+    }
+
+    private void hideSearchField() {
+        // hide searchField after animation
+        searchField.setVisibility(View.GONE);
     }
 
     @Override
-    public void onShopProgress() {
-
+    public void onShowProgress() {
+        // TODO: it's mock
+        runOnUiThread(
+                () -> Toast.makeText(this, "Start Progress", Toast.LENGTH_SHORT).show()
+        );
     }
 
     @Override
@@ -98,5 +125,12 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
     @Override
     public void onShowErrorToast(String message) {
 
+    }
+
+    @Override
+    public void onChangeInputTextField(CharSequence request) {
+        searchItem.expandActionView();
+        searchText.setText(request, TextView.BufferType.EDITABLE);
+        searchField.requestFocus();
     }
 }

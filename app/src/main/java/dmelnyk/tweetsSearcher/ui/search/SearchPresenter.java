@@ -1,5 +1,7 @@
 package dmelnyk.tweetsSearcher.ui.search;
 
+import java.util.concurrent.TimeUnit;
+
 import dmelnyk.tweetsSearcher.ui.search.Contract.ISearchPresenter;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
@@ -30,6 +32,16 @@ public class SearchPresenter implements ISearchPresenter {
         compositeDisposable.add(
                 observable
                         .filter(text -> text.length() != 0)
+                        .debounce(500, TimeUnit.MILLISECONDS)
+                        // It's mock. TODO: replace onShowProgress with Interceptor -> searchTweets
+                        .subscribe(value -> view.onShowProgress()));
+    }
+
+    @Override
+    public void forwardInputData(Observable<CharSequence> observable) {
+        compositeDisposable.add(
+                observable
+                        .filter(text -> text.length() != 0)
                         // run animation only once
                         .doOnNext(ignore -> {
                             if (!animationStarted) {
@@ -39,10 +51,9 @@ public class SearchPresenter implements ISearchPresenter {
                         })
                         .subscribe(
                         searchRequest -> {
+                            view.onChangeInputTextField(searchRequest);
 //                            view.onAnimateSearchView();
                         })
-
-
         );
     }
 }

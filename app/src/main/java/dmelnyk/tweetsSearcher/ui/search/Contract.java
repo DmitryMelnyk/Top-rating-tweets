@@ -11,10 +11,12 @@ public class Contract {
     public interface ISearchView {
         void onAnimateSearchView();
 
-        void onShopProgress();
+        void onShowProgress();
         void onHideProgress();
 
         void onShowErrorToast(String message);
+
+        void onChangeInputTextField(CharSequence request);
     }
 
     public interface ISearchPresenter {
@@ -22,5 +24,6 @@ public class Contract {
         void unbindView();
 
         void loadTweets(Observable<CharSequence> observable);
+        void forwardInputData(Observable<CharSequence> observable);
     }
 }
