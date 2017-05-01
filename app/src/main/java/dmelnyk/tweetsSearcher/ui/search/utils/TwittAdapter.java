@@ -10,7 +10,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 import dmelnyk.tweetsSearcher.R;
-import dmelnyk.tweetsSearcher.data.network.models.response.search.Twitt;
+import dmelnyk.tweetsSearcher.business.model.Tweet;
 
 /**
  * Created by dmitry on 30.04.17.
@@ -18,9 +18,9 @@ import dmelnyk.tweetsSearcher.data.network.models.response.search.Twitt;
 
 public class TwittAdapter extends RecyclerView.Adapter<TwittAdapter.TwittHolder> {
 
-    ArrayList<Twitt> dataSet;
+    ArrayList<Tweet> dataSet;
 
-    public TwittAdapter(ArrayList<Twitt> dataSet) {
+    public TwittAdapter(ArrayList<Tweet> dataSet) {
         this.dataSet = dataSet;
     }
 
@@ -35,7 +35,7 @@ public class TwittAdapter extends RecyclerView.Adapter<TwittAdapter.TwittHolder>
 
     @Override
     public void onBindViewHolder(TwittHolder holder, int position) {
-        Twitt twitt = dataSet.get(position);
+        Tweet twitt = dataSet.get(position);
         TextView textViewLikes = holder.textViewLikes;
         TextView textViewRetwitts = holder.textViewRetwitts;
         TextView textViewTwittContent = holder.textViewTwittContent;

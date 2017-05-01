@@ -8,7 +8,7 @@ import dmelnyk.tweetsSearcher.ui.search.SearchActivity;
  */
 
 @Subcomponent(modules = SearchModule.class)
-@SearchScoper
+@SearchScope
 public interface SearchComponent {
 
     void inject(SearchActivity searchActivity);
