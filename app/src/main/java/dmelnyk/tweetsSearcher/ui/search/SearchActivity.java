@@ -1,17 +1,26 @@
 package dmelnyk.tweetsSearcher.ui.search;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.jakewharton.rxbinding2.view.RxMenuItem;
 import com.jakewharton.rxbinding2.widget.RxTextView;
+
+import java.util.ArrayList;
 
 import javax.inject.Inject;
 
@@ -19,63 +28,62 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import dmelnyk.tweetsSearcher.R;
 import dmelnyk.tweetsSearcher.application.MyApp;
+import dmelnyk.tweetsSearcher.business.model.Tweet;
 import dmelnyk.tweetsSearcher.ui.search.dagger.SearchModule;
+import dmelnyk.tweetsSearcher.ui.search.utils.RetainFragment;
+import dmelnyk.tweetsSearcher.ui.search.utils.TwittAdapter;
 import io.reactivex.Observable;
 
 public class SearchActivity extends AppCompatActivity implements Contract.ISearchView {
 
-    private final int ANIM_DURATION = 5000; // duration time of animation in milliseconds
-    private final String FRAGMENT_TAG = this.getClass().getSimpleName() + "retain fragment";
+    private final String TAG = this.getClass().getSimpleName();
+    private final String FRAGMENT_TAG = TAG + "retain fragment";
+    private final String STATE_EMPTY = "empty";
+    private final String STATE_NON_EMPTY = "not empty";
 
     @Inject
     Contract.ISearchPresenter presenter;
 
     @BindView(R.id.search_field)
     EditText searchField;
+    @BindView(R.id.twitterRecycler)
+    RecyclerView twitterRecycler;
+    @BindView(R.id.swipeRefreshLayout)
+    SwipeRefreshLayout swipeRefreshLayout;
 
-    RetainFragment retainFragment;
+    private MenuItem refreshItem;
     private EditText searchText;
     private SearchView searchView;
     private MenuItem searchItem;
+    private RetainFragment retainFragment;
+    private TwittAdapter adapter;
+
+    // initial state
+    private String state = STATE_EMPTY;
+    private ArrayList<Tweet> tweets = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
+        // for injecting dependency
         MyApp.get(this).getAppComponent().add(new SearchModule()).inject(this);
 
-        presenter.bindView(this);
-
+        // instantiate 'retainFragment'
         instantiateRetainFragment();
-        instantiateViews();
+
+        // restoring state, tweets
+        restoreDataFromFragment();
+        // create configuration: EMPTY-screen or NONEMPTY recyclerView
+        restoreState(state);
+
+        presenter.bindView(this);
     }
 
-    @Override
-    protected void onStop() {
-        retainFragment.savePresenter(presenter);
-        presenter.unbindView();
-        super.onStop();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu, menu);
-
-        searchItem = menu.findItem(R.id.actionSearch);
-        searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
-
-        searchText = (EditText) searchView.findViewById(
-                android.support.v7.appcompat.R.id.search_src_text);
-
-        // creating Observable from SearchView's text
-        Observable<CharSequence> observable = RxTextView.textChanges(searchText);
-        presenter.loadTweets(observable);
-
-        return super.onCreateOptionsMenu(menu);
-    }
-
+    // create fragment to save data
     private void instantiateRetainFragment() {
         retainFragment = (RetainFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_TAG);
         if (retainFragment == null) {
@@ -83,54 +91,172 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
             getSupportFragmentManager().beginTransaction()
                     .add(retainFragment, FRAGMENT_TAG)
                     .commit();
-        } else {
-            presenter = retainFragment.restorePresenter();
         }
     }
 
-    private void instantiatePresenter() {
+    // restoring data
+    private void restoreDataFromFragment() {
+        if (retainFragment.getSavedState() != null) {
+            state = retainFragment.getSavedState();
+            tweets = retainFragment.getSavedTweets();
+        }
     }
 
-    private void instantiateViews() {
+    public void restoreState(String state) {
+        if (state.equals(STATE_EMPTY)) {
+            initializeEmptyState();
+        } else {
+            initializeNonEmptyState();
+        }
+    }
+
+    private void initializeEmptyState() {
+        // show SearchEditText()
+        initializeSearchEditText();
+    }
+
+    public void initializeNonEmptyState() {
+        // hide SearchEditText()
+        hideSearchEditText();
+        initializeRecyclerView();
+        initializeSwipeRefreshLayout();
+        // restore data in RecyclerView
+        adapter.notifyDataSetChanged();
+    }
+
+    @Override
+    protected void onPause() {
+        Log.d(TAG, "onPause()");
+        saveDataInFragment();
+        super.onPause();
+    }
+
+    private void saveDataInFragment() {
+        retainFragment.saveState(state);
+        retainFragment.saveTweets(tweets);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        Log.d(TAG, "onCreateOptionsMenu()");
+        getMenuInflater().inflate(R.menu.menu, menu);
+
+        // initialize refreshItem item for replace him by 'R.layout.action_view_progress'
+        refreshItem = menu.findItem(R.id.refresh_button);
+
+        searchItem = menu.findItem(R.id.actionSearch);
+        searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+        searchText = (EditText) searchView.findViewById(
+                android.support.v7.appcompat.R.id.search_src_text);
+
+        if (state.equals(STATE_EMPTY)) {
+            searchItem.setVisible(false);
+        }
+
+        // hide 'X'-button in SearchView
+        View searchClose = searchView.findViewById(
+                android.support.v7.appcompat.R.id.search_close_btn);
+        searchClose.setEnabled(false);
+        searchClose.setAlpha(0f);
+
+        createObservable();
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    private void createObservable() {
+        // creating Observable from SearchView's text, refresh-button and swipeRefreshLayout
+        Observable<CharSequence> observableTextView = RxTextView.textChanges(searchText);
+        Observable<CharSequence> observableRefreshClick = RxMenuItem.clicks(refreshItem)
+                .flatMap(ignore -> Observable.just(searchText.getText().toString()));
+        Observable<CharSequence> observableSwipeRefresh = Observable.create(
+                emitter ->
+                        swipeRefreshLayout.setOnRefreshListener(
+                                () -> {
+                                    String request = searchText.getText().toString();
+                                    // load swipe animation only if requestField isn't empty
+                                    if (!request.isEmpty()) {
+                                        emitter.onNext(request);
+                                    } else {
+                                        // stop refresh and show message
+                                        swipeRefreshLayout.setRefreshing(false);
+                                        Toast.makeText(this, "Search request is empty. Please, enter some tag to search", Toast.LENGTH_LONG).show();
+                                    }
+                                }
+                        ));
+
+        Observable<CharSequence> compositeObservable = Observable
+                .merge(observableTextView, observableRefreshClick, observableSwipeRefresh);
+        presenter.loadTweets(compositeObservable);
+    }
+
+    private void initializeSearchEditText() {
         Observable<CharSequence> textChanged = RxTextView.textChanges(searchField);
         presenter.forwardInputData(textChanged);
     }
 
-    @Override
-    public void onAnimateSearchView() {
-        searchField.animate()
-                .alpha(0) // disappearing
-                .setDuration(ANIM_DURATION)
-                .start();
+    private void initializeSwipeRefreshLayout() {
+        swipeRefreshLayout.setVisibility(View.VISIBLE);
+        swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
     }
 
-    private void hideSearchField() {
-        // hide searchField after animation
-        searchField.setVisibility(View.GONE);
+    private void initializeRecyclerView() {
+        adapter = new TwittAdapter(tweets);
+        twitterRecycler.setLayoutManager(new LinearLayoutManager(this));
+        twitterRecycler.setAdapter(adapter);
+    }
+
+    @Override
+    public void onUpdateTweets(Tweet tweet) {
+        state = STATE_NON_EMPTY;
+
+        tweets.add(tweet);
+        adapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onHideKeyboard() {
+        View viewWithFicus = this.getCurrentFocus();
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(viewWithFicus.getWindowToken(), 0);
+    }
+
+    @Override
+    public void cleanRecycler() {
+        tweets.clear();
     }
 
     @Override
     public void onShowProgress() {
-        // TODO: it's mock
-        runOnUiThread(
-                () -> Toast.makeText(this, "Start Progress", Toast.LENGTH_SHORT).show()
-        );
+        // do not show refresh-icon animation if user swiped to refresh.
+        if (!swipeRefreshLayout.isRefreshing()) {
+            MenuItemCompat.setActionView(
+                    refreshItem, R.layout.action_view_progress);
+        }
     }
 
     @Override
     public void onHideProgress() {
-
+        MenuItemCompat.setActionView(
+                refreshItem, null);
+        // cancelling swipe-animation
+        swipeRefreshLayout.setRefreshing(false);
     }
 
     @Override
     public void onShowErrorToast(String message) {
-
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onChangeInputTextField(CharSequence request) {
+        // display and forward data to searchView
+        searchItem.setVisible(true);
         searchItem.expandActionView();
         searchText.setText(request, TextView.BufferType.EDITABLE);
         searchField.requestFocus();
+    }
+
+    private void hideSearchEditText() {
+        searchField.setVisibility(View.GONE);
     }
 }

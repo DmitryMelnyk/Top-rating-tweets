@@ -9,13 +9,14 @@ import io.reactivex.Observable;
  * Created by dmitry on 01.05.17.
  */
 
-public class FakeSearchInteraktor implements ISearchInteractor {
+public class FakeSearchInteractor implements ISearchInteractor {
+
     @Override
-    public Observable<Tweet> loadTweets(@NonNull Observable<CharSequence> searchRequest) {
+    public Observable<Tweet> loadTweets(@NonNull CharSequence searchRequest) {
 
         Tweet tweet = Tweet.Builder()
                 .withText("Softwareentwickler Schwerpunkt Android in Hamburg, #Softwareentwicklung #IBM #Android #RxJava")
-                .withName("Name")
+                .withName("John Doe")
                 .withImageUrl("url")
                 .withDate("Fri Apr 28 00:16:41 +0000 2017")
                 .withLikes(12)

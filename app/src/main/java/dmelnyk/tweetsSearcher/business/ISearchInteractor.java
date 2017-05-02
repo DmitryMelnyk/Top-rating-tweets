@@ -11,5 +11,5 @@ import io.reactivex.Observable;
 
 public interface ISearchInteractor {
 
-    Observable<Tweet> loadTweets(@NonNull Observable<CharSequence> searchRequest);
+    public Observable<Tweet> loadTweets(@NonNull CharSequence searchRequest);
 }

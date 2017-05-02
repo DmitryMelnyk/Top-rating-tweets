@@ -10,11 +10,11 @@ import io.reactivex.schedulers.Schedulers;
 
 public class RxSchedulers {
 
-    public Scheduler getMainThreadSceduler() {
+    public Scheduler getMainThreadScheduler() {
         return AndroidSchedulers.mainThread();
     }
 
-    public Scheduler getIoScedulers() {
+    public Scheduler getIoSchedulers() {
         return Schedulers.io();
     }
 }

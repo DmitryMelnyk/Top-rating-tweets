@@ -13,7 +13,7 @@ import io.reactivex.Observable;
 public class SearchInteractor implements ISearchInteractor {
 
     @Override
-    public Observable<Tweet> loadTweets(@NonNull Observable<CharSequence> searchRequest) {
+    public Observable<Tweet> loadTweets(@NonNull CharSequence searchRequest) {
         return null;
     }
 
