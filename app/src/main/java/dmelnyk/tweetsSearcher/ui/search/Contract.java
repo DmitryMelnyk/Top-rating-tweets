@@ -1,5 +1,6 @@
 package dmelnyk.tweetsSearcher.ui.search;
 
+import dmelnyk.tweetsSearcher.business.model.Tweet;
 import io.reactivex.Observable;
 
 /**
@@ -9,14 +10,20 @@ import io.reactivex.Observable;
 public class Contract {
 
     public interface ISearchView {
-        void onAnimateSearchView();
-
         void onShowProgress();
         void onHideProgress();
 
         void onShowErrorToast(String message);
 
         void onChangeInputTextField(CharSequence request);
+
+        void onUpdateTweets(Tweet tweets);
+
+        void cleanRecycler();
+
+        void initializeNonEmptyState();
+
+        void onHideKeyboard();
     }
 
     public interface ISearchPresenter {

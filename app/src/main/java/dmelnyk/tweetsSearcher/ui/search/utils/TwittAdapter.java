@@ -18,30 +18,36 @@ import dmelnyk.tweetsSearcher.business.model.Tweet;
 
 public class TwittAdapter extends RecyclerView.Adapter<TwittAdapter.TwittHolder> {
 
-    ArrayList<Tweet> dataSet;
+    private static final long ANIMATE_DURATION = 300; // duration of "hide-visible" animation in ms.
+    private ArrayList<Tweet> dataSet;
+    private View cardView;
 
     public TwittAdapter(ArrayList<Tweet> dataSet) {
         this.dataSet = dataSet;
     }
 
-
     @Override
     public TwittHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
+        cardView = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.twitt_card_view, parent, false);
 
-        return new TwittHolder(view);
+        return new TwittHolder(cardView);
     }
 
     @Override
     public void onBindViewHolder(TwittHolder holder, int position) {
-        Tweet twitt = dataSet.get(position);
+        Tweet tweet = dataSet.get(position);
         TextView textViewLikes = holder.textViewLikes;
         TextView textViewRetwitts = holder.textViewRetwitts;
         TextView textViewTwittContent = holder.textViewTwittContent;
         ImageView imageViewAvatar = holder.imageViewAvatar;
 
         // TODO: initialize views below with data from dataSet
+        textViewLikes.setText("" + tweet.getLikes());
+        textViewRetwitts.setText("" + tweet.getRetweets());
+        textViewTwittContent.setText(tweet.getTweetText());
+
+        animationView(position);
     }
 
     @Override
@@ -61,6 +67,16 @@ public class TwittAdapter extends RecyclerView.Adapter<TwittAdapter.TwittHolder>
             textViewRetwitts = (TextView) itemView.findViewById(R.id.twittRetwitts);
             textViewTwittContent = (TextView) itemView.findViewById(R.id.twittContent);
             imageViewAvatar = (ImageView) itemView.findViewById(R.id.twittAvatar);
+        }
+    }
+
+    // animate last item
+    private void animationView(int position) {
+        if (position == dataSet.size() - 1) {
+            cardView.setAlpha(0);
+            cardView.animate()
+                    .alpha(1)
+                    .setDuration(ANIMATE_DURATION);
         }
     }
 }
