@@ -4,12 +4,12 @@
 
 
     <item android:id="@+id/actionSearch"
-          android:title="Search Twitts"
+          android:title="Search Tweets"
           android:icon="@android:drawable/ic_menu_search"
           app:showAsAction="collapseActionView|always"
           app:actionViewClass="android.support.v7.widget.SearchView"/>
 
-    <item android:id="@+id/refresh_button"
+    <item android:id="@+id/refreshButton"
           android:title=""
           android:icon="@drawable/ic_menu_refresh"
           app:showAsAction="always"/>

@@ -31,32 +31,30 @@ import dmelnyk.tweetsSearcher.application.MyApp;
 import dmelnyk.tweetsSearcher.business.model.Tweet;
 import dmelnyk.tweetsSearcher.ui.search.dagger.SearchModule;
 import dmelnyk.tweetsSearcher.ui.search.utils.RetainFragment;
-import dmelnyk.tweetsSearcher.ui.search.utils.TwittAdapter;
+import dmelnyk.tweetsSearcher.ui.search.utils.TweetAdapter;
 import io.reactivex.Observable;
+
+import static android.view.inputmethod.InputMethodManager.HIDE_IMPLICIT_ONLY;
 
 public class SearchActivity extends AppCompatActivity implements Contract.ISearchView {
 
     private final String TAG = this.getClass().getSimpleName();
     private final String FRAGMENT_TAG = TAG + "retain fragment";
-    private final String STATE_EMPTY = "empty";
-    private final String STATE_NON_EMPTY = "not empty";
+    private final String STATE_EMPTY = TAG + "empty";
+    private final String STATE_NON_EMPTY = TAG + "not empty";
 
-    @Inject
-    Contract.ISearchPresenter presenter;
+    @Inject Contract.ISearchPresenter presenter;
 
-    @BindView(R.id.search_field)
-    EditText searchField;
-    @BindView(R.id.twitterRecycler)
-    RecyclerView twitterRecycler;
-    @BindView(R.id.swipeRefreshLayout)
-    SwipeRefreshLayout swipeRefreshLayout;
+    @BindView(R.id.searchField) EditText searchField;
+    @BindView(R.id.twitterRecycler) RecyclerView twitterRecycler;
+    @BindView(R.id.swipeRefreshLayout) SwipeRefreshLayout swipeRefreshLayout;
 
     private MenuItem refreshItem;
     private EditText searchText;
     private SearchView searchView;
     private MenuItem searchItem;
     private RetainFragment retainFragment;
-    private TwittAdapter adapter;
+    private TweetAdapter adapter;
 
     // initial state
     private String state = STATE_EMPTY;
@@ -72,12 +70,12 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
         // for injecting dependency
         MyApp.get(this).getAppComponent().add(new SearchModule()).inject(this);
 
-        // instantiate 'retainFragment'
+        // instantiate 'retainFragment' for saving/restoring data
         instantiateRetainFragment();
 
         // restoring state, tweets
         restoreDataFromFragment();
-        // create configuration: EMPTY-screen or NONEMPTY recyclerView
+        // create configuration: EMPTY-screen or NONEMPTY recyclerView with data
         restoreState(state);
 
         presenter.bindView(this);
@@ -99,6 +97,8 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
         if (retainFragment.getSavedState() != null) {
             state = retainFragment.getSavedState();
             tweets = retainFragment.getSavedTweets();
+            Log.d(TAG, "state = " + state);
+            Log.d(TAG, "tweets = " + tweets.get(0).getUserName());
         }
     }
 
@@ -120,7 +120,7 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
         hideSearchEditText();
         initializeRecyclerView();
         initializeSwipeRefreshLayout();
-        // restore data in RecyclerView
+        // show data in RecyclerView
         adapter.notifyDataSetChanged();
     }
 
@@ -128,6 +128,7 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
     protected void onPause() {
         Log.d(TAG, "onPause()");
         saveDataInFragment();
+        presenter.unbindView();
         super.onPause();
     }
 
@@ -142,8 +143,7 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
         getMenuInflater().inflate(R.menu.menu, menu);
 
         // initialize refreshItem item for replace him by 'R.layout.action_view_progress'
-        refreshItem = menu.findItem(R.id.refresh_button);
-
+        refreshItem = menu.findItem(R.id.refreshButton);
         searchItem = menu.findItem(R.id.actionSearch);
         searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         searchText = (EditText) searchView.findViewById(
@@ -159,6 +159,7 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
         searchClose.setEnabled(false);
         searchClose.setAlpha(0f);
 
+        // observable can be created after initializing 'searchText'
         createObservable();
         return super.onCreateOptionsMenu(menu);
     }
@@ -179,7 +180,7 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
                                     } else {
                                         // stop refresh and show message
                                         swipeRefreshLayout.setRefreshing(false);
-                                        Toast.makeText(this, "Search request is empty. Please, enter some tag to search", Toast.LENGTH_LONG).show();
+                                        onShowErrorToast("Search request is empty. Please, enter some tag to search");
                                     }
                                 }
                         ));
@@ -200,7 +201,7 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
     }
 
     private void initializeRecyclerView() {
-        adapter = new TwittAdapter(tweets);
+        adapter = new TweetAdapter(tweets);
         twitterRecycler.setLayoutManager(new LinearLayoutManager(this));
         twitterRecycler.setAdapter(adapter);
     }
@@ -217,7 +218,7 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
     public void onHideKeyboard() {
         View viewWithFicus = this.getCurrentFocus();
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(viewWithFicus.getWindowToken(), 0);
+        imm.hideSoftInputFromWindow(viewWithFicus.getWindowToken(),  HIDE_IMPLICIT_ONLY);
     }
 
     @Override
@@ -244,7 +245,7 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
 
     @Override
     public void onShowErrorToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
     @Override

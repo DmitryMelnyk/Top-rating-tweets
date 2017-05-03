@@ -16,13 +16,13 @@ import dmelnyk.tweetsSearcher.business.model.Tweet;
  * Created by dmitry on 30.04.17.
  */
 
-public class TwittAdapter extends RecyclerView.Adapter<TwittAdapter.TwittHolder> {
+public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TwittHolder> {
 
     private static final long ANIMATE_DURATION = 300; // duration of "hide-visible" animation in ms.
     private ArrayList<Tweet> dataSet;
     private View cardView;
 
-    public TwittAdapter(ArrayList<Tweet> dataSet) {
+    public TweetAdapter(ArrayList<Tweet> dataSet) {
         this.dataSet = dataSet;
     }
 
