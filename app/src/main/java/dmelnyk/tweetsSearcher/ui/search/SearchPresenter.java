@@ -5,6 +5,7 @@ import android.util.Log;
 import java.util.concurrent.TimeUnit;
 
 import dmelnyk.tweetsSearcher.business.ISearchInteractor;
+import dmelnyk.tweetsSearcher.business.model.Tweet;
 import dmelnyk.tweetsSearcher.ui.search.Contract.ISearchPresenter;
 import dmelnyk.tweetsSearcher.utils.RxSchedulers;
 import io.reactivex.Observable;
@@ -23,7 +24,6 @@ public class SearchPresenter implements ISearchPresenter {
     private ISearchInteractor searchInteractor;
     private RxSchedulers rxSchedulers;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
-    private boolean animationStarted;
 
     public SearchPresenter(ISearchInteractor searchInteractor, RxSchedulers rxSchedulers) {
         this.searchInteractor = searchInteractor;
@@ -41,41 +41,48 @@ public class SearchPresenter implements ISearchPresenter {
         view = null;
     }
 
+    // searching tweets in the net
     @Override
     public void loadTweets(Observable<CharSequence> observable) {
-        // Observable for text changing with debounce 1 seconds.
+
+        // Observable for text changing with debounce 1500 millis.
         Observable<CharSequence> textChangeObservable = observable
-                // clean recyclerView dataSet
                 .debounce(1500, TimeUnit.MILLISECONDS)
                 .filter(text -> text.length() > 2);
 
         Disposable disposable = textChangeObservable
                 // display search progress
                 .observeOn(rxSchedulers.getMainThreadScheduler())
-                .doOnNext(ignore -> {
-                    view.initializeNonEmptyState();
-                    view.onHideKeyboard();
-                    view.cleanRecycler();
-                    view.onShowProgress();
-                })
+                .doOnNext(ignore -> displaySearchProcessing())
                 // searching tweets
                 .observeOn(rxSchedulers.getIoSchedulers())
                 .flatMap(request -> Observable.interval(300, TimeUnit.MILLISECONDS)
                         .zipWith(searchInteractor.loadTweets(request), (index, tweet) -> tweet))
-                // show tweets
                 .observeOn(rxSchedulers.getMainThreadScheduler())
-                .subscribe(tweets -> {
-                    view.onHideProgress();
-                    view.onUpdateTweets(tweets);
-                });
+                // show tweets
+                .subscribe(tweets -> displayTweets(tweets));
+
         compositeDisposable.add(disposable);
     }
 
+    private void displaySearchProcessing() {
+        view.initializeNonEmptyState();
+        view.onHideKeyboard();
+        view.onShowProgress();
+        view.cleanRecycler();
+    }
+
+    private void displayTweets(Tweet tweets) {
+        view.onHideProgress();
+        view.onUpdateTweets(tweets);
+    }
+
+    // forwarding text from SearchEditTextField to SearchView
     @Override
     public void forwardInputData(Observable<CharSequence> observable) {
-        compositeDisposable.add(
-                observable
-                        .filter(text -> text.length() > 2)
+
+        compositeDisposable.add(observable
+                .filter(text -> text.length() > 2)
                         .subscribe(
                         searchRequest -> {
                             Log.d(TAG, "searchRequest = " + searchRequest);

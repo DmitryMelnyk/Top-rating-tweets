@@ -34,10 +34,10 @@ public class RetainFragment extends Fragment {
     }
 
     public void saveTweets(ArrayList<Tweet> tweets) {
-        this.tweets = tweets;
+        this.tweets = new ArrayList<>(tweets);
     }
 
     public void saveState(String state) {
-        this.state = state;
+        this.state = new String(state);
     }
 }
