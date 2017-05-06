@@ -3,8 +3,8 @@ package dmelnyk.tweetsSearcher.application;
 import javax.inject.Singleton;
 
 import dagger.Component;
-import dmelnyk.tweetsSearcher.ui.search.dagger.SearchComponent;
-import dmelnyk.tweetsSearcher.ui.search.dagger.SearchModule;
+import dmelnyk.tweetsSearcher.ui.search.di.SearchComponent;
+import dmelnyk.tweetsSearcher.ui.search.di.SearchModule;
 
 /**
  * Created by dmitry on 29.04.17.

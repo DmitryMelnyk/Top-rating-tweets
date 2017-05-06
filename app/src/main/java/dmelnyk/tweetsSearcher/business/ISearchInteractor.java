@@ -2,6 +2,8 @@ package dmelnyk.tweetsSearcher.business;
 
 import android.support.annotation.NonNull;
 
+import java.io.IOException;
+
 import dmelnyk.tweetsSearcher.business.model.Tweet;
 import io.reactivex.Observable;
 
@@ -11,5 +13,5 @@ import io.reactivex.Observable;
 
 public interface ISearchInteractor {
 
-    public Observable<Tweet> loadTweets(@NonNull CharSequence searchRequest);
+    public Observable<Tweet> loadTweets(@NonNull CharSequence searchRequest) throws IOException;
 }

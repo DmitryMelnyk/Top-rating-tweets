@@ -200,9 +200,6 @@ public class SearchActivityTest {
     @Test
     public void onShowProgress() {
         // before
-        Espresso.onView(withId(R.id.refreshButton))
-                .check(matches(isDisplayed()));
-
         Espresso.onView(withId(R.id.searchField))
                 .perform(typeText("text"));
 
@@ -227,7 +224,7 @@ public class SearchActivityTest {
     }
 
     @Test
-    public void onChangeInputTextField() throws NoSuchFieldException {
+    public void onChangeInputTextField() throws NoSuchFieldException, InterruptedException {
         // given
         CharSequence searchRequest = "#android";
         // when
@@ -236,6 +233,7 @@ public class SearchActivityTest {
         // then
         Espresso.onView(withText(searchRequest.toString()))
                 .check(matches(isDisplayed()));
+//        Thread.sleep(2000);
     }
 
     @Test
@@ -251,9 +249,7 @@ public class SearchActivityTest {
                 () -> {
                     try {
                         hideSearchEditText.invoke(searchActivity);
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    } catch (InvocationTargetException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 });
