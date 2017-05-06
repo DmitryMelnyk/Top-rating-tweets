@@ -1,4 +1,4 @@
-package dmelnyk.tweetsSearcher.ui.search.dagger;
+package dmelnyk.tweetsSearcher.ui.search.di;
 
 import dagger.Subcomponent;
 import dmelnyk.tweetsSearcher.ui.search.SearchActivity;

@@ -11,7 +11,7 @@ public class Tweet {
     private int likes;
     private int retweets;
 
-    private Tweet() {
+    Tweet() {
     }
 
     public int getLikes() {

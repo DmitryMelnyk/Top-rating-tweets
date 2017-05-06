@@ -5,6 +5,7 @@ import android.util.Log;
 import java.util.concurrent.TimeUnit;
 
 import dmelnyk.tweetsSearcher.business.ISearchInteractor;
+import dmelnyk.tweetsSearcher.business.model.EmptyTweet;
 import dmelnyk.tweetsSearcher.business.model.Tweet;
 import dmelnyk.tweetsSearcher.ui.search.Contract.ISearchPresenter;
 import dmelnyk.tweetsSearcher.utils.RxSchedulers;
@@ -56,25 +57,36 @@ public class SearchPresenter implements ISearchPresenter {
                 .doOnNext(ignore -> displaySearchProcessing())
                 // searching tweets
                 .observeOn(rxSchedulers.getIoSchedulers())
-                .flatMap(request -> Observable.interval(300, TimeUnit.MILLISECONDS)
-                        .zipWith(searchInteractor.loadTweets(request), (index, tweet) -> tweet))
+                .flatMap(request -> searchInteractor.loadTweets(request))
                 .observeOn(rxSchedulers.getMainThreadScheduler())
                 // show tweets
-                .subscribe(tweets -> displayTweets(tweets));
+                .subscribe(
+                        tweet -> displayTweets(tweet)
+                        /*error -> displayErrorMessage(error.getMessage())*/);
 
         compositeDisposable.add(disposable);
     }
 
+    private void displayErrorMessage(String errorMessage) {
+        view.onShowErrorToast(errorMessage);
+        view.onHideProgress();
+    }
+
     private void displaySearchProcessing() {
+        view.onShowProgress();
         view.initializeNonEmptyState();
         view.onHideKeyboard();
-        view.onShowProgress();
         view.cleanRecycler();
     }
 
-    private void displayTweets(Tweet tweets) {
+    private void displayTweets(Tweet tweet) {
         view.onHideProgress();
-        view.onUpdateTweets(tweets);
+
+        if (tweet instanceof EmptyTweet) {
+            view.onShowErrorToast(-1);
+        } else {
+            view.onUpdateTweets(tweet);
+        }
     }
 
     // forwarding text from SearchEditTextField to SearchView
@@ -86,8 +98,6 @@ public class SearchPresenter implements ISearchPresenter {
                         .subscribe(
                         searchRequest -> {
                             Log.d(TAG, "searchRequest = " + searchRequest);
-                            view.onChangeInputTextField(searchRequest);
-                        })
-        );
+                            view.onChangeInputTextField(searchRequest); }));
     }
 }

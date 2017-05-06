@@ -1,4 +1,4 @@
-package dmelnyk.tweetsSearcher.ui.search.dagger;
+package dmelnyk.tweetsSearcher.ui.search.di;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

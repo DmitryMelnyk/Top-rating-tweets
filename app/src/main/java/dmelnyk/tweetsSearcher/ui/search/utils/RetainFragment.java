@@ -16,6 +16,7 @@ public class RetainFragment extends Fragment {
 
     private ArrayList<Tweet> tweets;
     private String state;
+    private String request;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -33,11 +34,19 @@ public class RetainFragment extends Fragment {
         return state;
     }
 
+    public String getSavedSearchRequest() {
+        return request;
+    }
+
     public void saveTweets(ArrayList<Tweet> tweets) {
         this.tweets = new ArrayList<>(tweets);
     }
 
     public void saveState(String state) {
         this.state = new String(state);
+    }
+
+    public void saveRequest(String request) {
+        this.request = request;
     }
 }

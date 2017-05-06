@@ -3,7 +3,10 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
 
-    android:id="@+id/cardViewTwitt"
+    android:id="@+id/cardViewTweet"
+    app:cardBackgroundColor="@color/cardview_clicked"
+    android:clickable="true"
+    android:foreground="?android:attr/selectableItemBackground"
     app:cardCornerRadius="3dp"
     android:layout_marginTop="5dp"
     android:layout_marginBottom="5dp"
@@ -13,53 +16,83 @@
     android:layout_height="wrap_content">
 
     <LinearLayout
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <!-- avatar -->
+        <ImageView
+            android:id="@+id/tweetAvatar"
+            android:src="@drawable/tweet_lg"
+            android:paddingLeft="3dp"
+            android:layout_gravity="center"
+            android:layout_width="85dp"
+            android:layout_height="85dp"/>
+
         <LinearLayout
-            android:orientation="horizontal"
+            android:orientation="vertical"
+            android:paddingLeft="3dp"
+            android:paddingRight="3dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <ImageView
-                android:id="@+id/twittAvatar"
-                android:src="@drawable/twitt_ico"
-                android:layout_gravity="center"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+            <!-- Nickname and date -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/nickname"
+                    android:layout_alignParentLeft="true"
+                    android:text="User Name"
+                    android:textStyle="bold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+                <TextView
+                    android:id="@+id/date"
+                    android:text="date"
+                    android:textStyle="italic"
+                    android:layout_alignParentRight="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+            </RelativeLayout>
+
+            <!-- tweet message -->
             <TextView
-                android:id="@+id/twittContent"
-                android:text="Getting Started With Scala.js for the JavaScript Developer (Part 1 | Setup Vue.js) https://medium.com/@michaelmangial1/getting-started-with-scala-js-scalavue-and-scalareact-for-the-javascript-developer-ac578ddcb5a8 … #scala"
-                android:paddingLeft="3dp"
-                android:paddingRight="3dp"
+                android:id="@+id/tweetContent"
+                android:minHeight="45dp"
+                android:text="Tweet text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
+
+            <!-- likes and retweets -->
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_gravity="right"
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tweetLikes"
+                    style="@style/CustomTextView"/>
+
+                <ImageView
+                    android:src="@drawable/ic_repeat_black_18dp"
+                    style="@style/ImageView"
+                    android:layout_marginRight="10dp"/>
+
+                <TextView
+                    android:id="@+id/tweetRetwitts"
+                    style="@style/CustomTextView"/>
+
+                <ImageView
+                    android:src="@drawable/ic_favorite_border_black_18dp"
+                    style="@style/ImageView"/>
+            </LinearLayout>
         </LinearLayout>
 
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_gravity="right"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
 
-            <TextView
-                android:id="@+id/twittLikes"
-                style="@style/CustomTextView"/>
-
-            <ImageView
-                android:src="@drawable/ic_repeat_black_18dp"
-                style="@style/ImageView"
-                android:layout_marginRight="10dp"/>
-
-            <TextView
-                android:id="@+id/twittRetwitts"
-                style="@style/CustomTextView"/>
-
-            <ImageView
-                android:src="@drawable/ic_favorite_border_black_18dp"
-                style="@style/ImageView"/>
-        </LinearLayout>
     </LinearLayout>
 
 

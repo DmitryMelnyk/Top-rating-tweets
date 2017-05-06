@@ -1,13 +1,18 @@
 package dmelnyk.tweetsSearcher.business;
 
+import android.content.Context;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import dmelnyk.tweetsSearcher.business.model.Tweet;
 import dmelnyk.tweetsSearcher.data.network.models.response.search.SearchTweetModel;
+import dmelnyk.tweetsSearcher.data.repositories.search.SearchRepository;
+import dmelnyk.tweetsSearcher.data.repositories.search.core.NetworkUtil;
 import io.reactivex.Observable;
 import io.reactivex.observers.TestObserver;
 
@@ -31,7 +36,7 @@ public class SearchInteractorTest {
 
     @Before
     public void createFakeTweetModel() {
-        SearchTweetModel tweetModel = new SearchTweetModel(tweetText, tweetDate, tweetLikes, tweetRetweets);
+        SearchTweetModel tweetModel = new SearchTweetModel(tweetText, null, tweetLikes, tweetRetweets);
 
         SearchTweetModel.User user = new SearchTweetModel.User(userName, usrImageUrl);
         tweetModel.setUser(user);
@@ -39,10 +44,13 @@ public class SearchInteractorTest {
         observableTweetModel = Observable.just(tweetModel);
     }
 
-    @Test public void privateConvertTweers() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    @Mock
+    Context context;
+
+    @Test public void privateConvertTweets() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         // given:
         TestObserver<Tweet> testObserver = new TestObserver<>();
-        SearchInteractor interactor = new SearchInteractor();
+        SearchInteractor interactor = new SearchInteractor(new SearchRepository(new NetworkUtil(context)));
 
         Method convertTweets = SearchInteractor.class.getDeclaredMethod("convertTweets", Observable.class);
         convertTweets.setAccessible(true);
