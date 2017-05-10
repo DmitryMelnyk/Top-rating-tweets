@@ -11,10 +11,12 @@ import android.widget.TextView;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import dmelnyk.tweetsSearcher.R;
 import dmelnyk.tweetsSearcher.business.model.Tweet;
-import dmelnyk.tweetsSearcher.ui.dialogs.reference.core.OpenReferenceInBrowser;
+
+import dmelnyk.tweetsSearcher.ui.dialogs.reference.RefDialog;
 
 /**
  * Created by dmitry on 30.04.17.
@@ -23,6 +25,8 @@ import dmelnyk.tweetsSearcher.ui.dialogs.reference.core.OpenReferenceInBrowser;
 public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetHolder> {
 
     private static final long ANIMATE_DURATION = 600; // duration of "hide-visible" animation in ms.
+    public static final int REFERENCE_CODE = 1;
+
     private ArrayList<Tweet> dataSet;
     private View cardView;
     private AppCompatActivity context;
@@ -68,7 +72,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetHolder>
         animationView(position);
 
         textViewTweetContent.setOnClickListener(
-                click -> new OpenReferenceInBrowser(context, tweet.getTweetText()));
+                click -> new OpenReferenceInBrowser(tweet.getTweetText()));
     }
 
     @Override
@@ -104,4 +108,35 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetHolder>
                     .setDuration(ANIMATE_DURATION);
         }
     }
+
+    public class OpenReferenceInBrowser {
+
+        public OpenReferenceInBrowser(String tweet) {
+            // check if text contains reference.
+            // If text contains more then one references
+            // show dialog-chooser.
+            List<String> refs = HtmlTextUtil.findReferences(tweet);
+            int refCounts = refs.size();
+            switch (refCounts) {
+                // tweet doesn't contain any reference
+                case 0:
+                    return;
+                // tweet contains one reference
+                case 1:
+                    ((RefDialog.ReferenceListener) context).setReference(refs.get(0));
+                    break;
+                // tweet contains more then one reference
+                default:
+                    showDialogChooser(refs);
+
+            }
+        }
+
+        private void showDialogChooser(List<String> refs) {
+            DialogFragment dialogFragment = new RefDialog().getInstance(refs);
+            dialogFragment.show(context.getSupportFragmentManager(), "refDialog");
+        }
+    }
+
+
 }

@@ -8,6 +8,7 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
+import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -15,14 +16,14 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 import dmelnyk.tweetsSearcher.data.network.models.response.search.SearchErrorTweetModel;
 import dmelnyk.tweetsSearcher.data.network.models.response.search.SearchTweetModel;
-import dmelnyk.tweetsSearcher.data.network.models.response.search.raw.TweetRawObject;
 import dmelnyk.tweetsSearcher.data.repositories.search.core.NetworkUtil;
 import dmelnyk.tweetsSearcher.data.repositories.search.core.OAthToken;
 import dmelnyk.tweetsSearcher.data.repositories.search.core.TwitterApi;
+import dmelnyk.tweetsSearcher.ui.search.SearchActivity;
+
 import io.reactivex.Observable;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
@@ -56,8 +57,8 @@ public class SearchRepository implements ISearchRepository {
         // checking network connection
         if (!networkUtil.isNetworkReachable()) {
             Log.d(TAG, "Network is not reachable. Please, check connection!");
-            return Observable.error(() ->
-                    new SearchErrorTweetModel("Network is not reachable. Please, check connection!", -1));
+            return Observable.just(new SearchErrorTweetModel("Network is not reachable. Please, check connection!", SearchActivity.TOAST_CODE_NO_INTERNET_CONNECTION));
+
         }
 
         if (token == null) {
@@ -68,8 +69,8 @@ public class SearchRepository implements ISearchRepository {
                 initializeToken(response.body());
                 Log.d(TAG, token.getAuthorization());
             } else {
-                return Observable.error(() ->
-                        new SearchErrorTweetModel(response.message(), response.code()));
+                return Observable.just(new SearchErrorTweetModel(response.message(), response.code()));
+
             }
         }
 
@@ -77,17 +78,9 @@ public class SearchRepository implements ISearchRepository {
     }
 
     private Observable<SearchTweetModel> getTweetsModel(String request) throws IOException {
-        Response<TweetRawObject> tweetRawObjectResponse =
-                twitterApi.searchTweets (request, numTweets).execute();
+        return twitterApi.searchTweets(request, numTweets)
+                .flatMapObservable(rawObject -> Observable.fromIterable(rawObject.getTweets()));
 
-        Log.d(TAG, String.format("response code = %d, message = %s error = %s",
-                tweetRawObjectResponse.code(), tweetRawObjectResponse.message(),
-                tweetRawObjectResponse.errorBody()
-                ));
-
-        List<SearchTweetModel> tweets = tweetRawObjectResponse.body().getTweets();
-
-        return Observable.fromIterable(tweets);
     }
 
     private OkHttpClient client = new OkHttpClient.Builder()
@@ -117,8 +110,9 @@ public class SearchRepository implements ISearchRepository {
 
     private Retrofit retrofit = new Retrofit.Builder()
             .baseUrl(TwitterApi.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create(gson))
             .client(client)
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build();
 
     private TwitterApi twitterApi = retrofit.create(TwitterApi.class);

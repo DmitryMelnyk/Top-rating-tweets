@@ -1,7 +1,11 @@
 package dmelnyk.tweetsSearcher.ui.search;
 
 import android.app.Activity;
+
+import android.content.Intent;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
+import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -9,18 +13,23 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jakewharton.rxbinding2.widget.RxTextView;
+import com.tapadoo.alerter.Alert;
+import com.tapadoo.alerter.Alerter;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -32,31 +41,45 @@ import dmelnyk.tweetsSearcher.business.model.Tweet;
 import dmelnyk.tweetsSearcher.ui.search.di.SearchModule;
 import dmelnyk.tweetsSearcher.ui.search.utils.RetainFragment;
 import dmelnyk.tweetsSearcher.ui.search.utils.TweetAdapter;
+import dmelnyk.tweetsSearcher.ui.web.WebViewActivity;
 import io.reactivex.Observable;
 
-public class SearchActivity extends AppCompatActivity implements Contract.ISearchView {
+public class SearchActivity extends AppCompatActivity
+        implements Contract.ISearchView, RefDialog.ReferenceListener {
 
     private final String TAG = this.getClass().getSimpleName();
     private final String FRAGMENT_TAG = TAG + "retain fragment";
     private final String STATE_EMPTY = TAG + "empty";
     private final String STATE_NON_EMPTY = TAG + "not empty";
+    private static final int SPEECH_REQUEST_CODE = 0;
 
-    @Inject Contract.ISearchPresenter presenter;
+    public static final int TOAST_CODE_EMPTY = 0;
+    public static final int TOAST_CODE_BAD_REQUEST = 1;
+    public static final int TOAST_CODE_NO_INTERNET_CONNECTION = 2;
 
-    @BindView(R.id.searchField) EditText searchField;
-    @BindView(R.id.twitterRecycler) RecyclerView twitterRecycler;
-    @BindView(R.id.swipeRefreshLayout) SwipeRefreshLayout swipeRefreshLayout;
+    @IntDef( {TOAST_CODE_EMPTY, TOAST_CODE_BAD_REQUEST, TOAST_CODE_NO_INTERNET_CONNECTION})
+    @Retention(RetentionPolicy.CLASS)
+    public @interface ErrorCode {}
+
+    @Inject
+    Contract.ISearchPresenter presenter;
+
+    @BindView(R.id.twitterRecycler)
+    RecyclerView twitterRecycler;
+    @BindView(R.id.swipeRefreshLayout)
+    SwipeRefreshLayout swipeRefreshLayout;
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
 
     private EditText searchText;
-    private SearchView searchView;
-    private MenuItem searchItem;
     private RetainFragment retainFragment;
-    private TweetAdapter adapter;
 
+    private TweetAdapter adapter;
     // initial state
     private String state = STATE_EMPTY;
     private String searchRequest = "";
     private ArrayList<Tweet> tweets = new ArrayList<>();
+    private SearchView searchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +94,7 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
         // instantiate 'retainFragment' for saving/restoring data
         instantiateRetainFragment();
 
+        setSupportActionBar(toolbar);
         // restoring state, tweets
         restoreDataFromFragment();
         // create configuration: EMPTY-screen or NONEMPTY recyclerView with data
@@ -109,13 +133,10 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
     }
 
     private void initializeEmptyState() {
-        // show SearchEditText()
-        initializeSearchEditText();
+//        state = STATE_NON_EMPTY;
     }
 
     public void initializeNonEmptyState() {
-        // hide SearchEditText()
-        hideSearchEditText();
         initializeRecyclerView();
         initializeSwipeRefreshLayout();
         // show data in RecyclerView
@@ -126,8 +147,14 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
     protected void onPause() {
         Log.d(TAG, "onPause()");
         saveDataInFragment();
-        presenter.unbindView();
         super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.d(TAG, "onDestroy(). unBind View");
+        presenter.unbindView();
+        super.onDestroy();
     }
 
     private void saveDataInFragment() {
@@ -141,20 +168,45 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
         Log.d(TAG, "onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.menu, menu);
 
-        searchItem = menu.findItem(R.id.actionSearch);
+        MenuItem searchItem = menu.findItem(R.id.actionSearch);
         searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         searchText = (EditText) searchView.findViewById(
                 android.support.v7.appcompat.R.id.search_src_text);
 
         searchText.setGravity(View.TEXT_ALIGNMENT_CENTER);
 
-        if (state.equals(STATE_EMPTY)) {
-            searchItem.setVisible(false);
-        }
-
+        menu.findItem(R.id.actionRecord)
+                .setOnMenuItemClickListener(item -> {
+                    expandSearchView();
+                    displaySpeechRecognizer();
+                    return false;
+                });
         // observable can be created after initializing 'searchText'
         createObservable();
         return super.onCreateOptionsMenu(menu);
+    }
+
+    private void expandSearchView() {
+        searchView.onActionViewExpanded();
+    }
+
+    private void displaySpeechRecognizer() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        startActivityForResult(intent, SPEECH_REQUEST_CODE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SPEECH_REQUEST_CODE && resultCode == RESULT_OK) {
+            List<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            String spokenText = results.get(0);
+
+            Log.d(TAG, "spoken text = " + spokenText);
+            searchRequest = spokenText;
+            searchText.setText(spokenText);
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void createObservable() {
@@ -164,6 +216,7 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
                             saveRequest(request);
                             Log.d(TAG, "request = " + request);
                 });
+
         Observable<CharSequence> observableSwipeRefresh = Observable.create(
                 emitter ->
                         swipeRefreshLayout.setOnRefreshListener(
@@ -175,7 +228,7 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
                                     } else {
                                         // stop refresh and show message
                                         swipeRefreshLayout.setRefreshing(false);
-                                        onShowErrorToast("Search request is empty. Please, enter some tag to search");
+                                        onShowErrorToast(3);
                                     }
                                 }
                         ));
@@ -190,11 +243,6 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
         if (request.length() > 0) {
             searchRequest = request.toString();
         }
-    }
-
-    private void initializeSearchEditText() {
-        Observable<CharSequence> textChanged = RxTextView.textChanges(searchField);
-        presenter.forwardInputData(textChanged);
     }
 
     private void initializeSwipeRefreshLayout() {
@@ -212,6 +260,7 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
     public void onUpdateTweets(Tweet tweet) {
         tweets.add(tweet);
         adapter.notifyDataSetChanged();
+        state = STATE_NON_EMPTY;
     }
 
     @Override
@@ -239,32 +288,30 @@ public class SearchActivity extends AppCompatActivity implements Contract.ISearc
     }
 
     @Override
-    public void onShowErrorToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void onShowErrorToast(int message) {
-        switch (message) {
-            case -1: // bad searchRequest
-                Toast.makeText(this, getString(R.string.bad_request), Toast.LENGTH_LONG).show();
+    public void onShowErrorToast(@ErrorCode int code) {
+        String message = "";
+        switch (code) {
+            case TOAST_CODE_BAD_REQUEST: // bad searchRequest
+                message = getString(R.string.toast_bad_request);
                 break;
-            case -2: // no internet Connection;
-                Toast.makeText(this, "no internet connection", Toast.LENGTH_LONG).show();
+            case TOAST_CODE_NO_INTERNET_CONNECTION: // no internet Connection;
+                message = getString(R.string.toast_no_internet);
                 break;
+            case TOAST_CODE_EMPTY: // request field is empty;
+                message = getString(R.string.toast_empty);
         }
+
+        Alerter.create(this)
+                .setText(message)
+                .setBackgroundColor(R.color.colorPrimaryDark)
+                .setDuration(4000)
+                .show();
     }
 
     @Override
-    public void onChangeInputTextField(CharSequence request) {
-        // display and forward data to searchView
-        state = STATE_NON_EMPTY;
-        searchItem.setVisible(true);
-        searchText.setText(request, TextView.BufferType.EDITABLE);
-        searchField.requestFocus();
-    }
-
-    private void hideSearchEditText() {
-        searchField.setVisibility(View.GONE);
+    public void setReference(String reference) {
+        Intent webIntent = new Intent(this, WebViewActivity.class);
+        webIntent.putExtra(WebViewActivity.KEY_URL, reference);
+        startActivity(webIntent);
     }
 }

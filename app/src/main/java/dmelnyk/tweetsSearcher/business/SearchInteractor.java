@@ -8,6 +8,7 @@ import java.util.Date;
 
 import dmelnyk.tweetsSearcher.business.model.EmptyTweet;
 import dmelnyk.tweetsSearcher.business.model.Tweet;
+import dmelnyk.tweetsSearcher.data.network.models.response.search.SearchErrorTweetModel;
 import dmelnyk.tweetsSearcher.data.network.models.response.search.SearchTweetModel;
 import dmelnyk.tweetsSearcher.data.repositories.search.ISearchRepository;
 import io.reactivex.Observable;
@@ -29,24 +30,36 @@ public class SearchInteractor implements ISearchInteractor {
 
         Observable<SearchTweetModel> rawTweets = getRawTweets(searchRequest.toString());
         if (rawTweets.isEmpty().blockingGet()) {
-            return Observable.just(new EmptyTweet());
+
+            // NO_TWEETS_CODE
+            return Observable.just(new EmptyTweet(1));
         }
+
         return convertTweets(rawTweets);
     }
 
-    private Observable<SearchTweetModel> getRawTweets(String searchRequest) throws IOException {
+    protected Observable<SearchTweetModel> getRawTweets(String searchRequest) throws IOException {
+
         return iSearchRepository.getTweets(searchRequest);    }
 
     public Observable<Tweet> convertTweets(Observable<SearchTweetModel> observable) {
         return observable
-                .map(rawTweet -> Tweet.Builder()
-                        .withName(rawTweet.getUser().getUserName())
-                        .withText(rawTweet.getTextTweet())
-                        .withImageUrl(changeImageUrlAddress(rawTweet.getUser().getUserImageUrl()))
-                        .withDate(convertDate(rawTweet.getDateCreation()))
-                        .withLikes(rawTweet.getLikesCount())
-                        .withRetweets(rawTweet.getRetweetCount())
-                        .build()
+                .map(rawTweet -> {
+                            if (rawTweet instanceof SearchErrorTweetModel) {
+                                // NO_INTERNET_CONNECTION_CODE
+                                return new EmptyTweet(2);
+                            }
+
+                            return Tweet.Builder()
+                                    .withName(rawTweet.getUser().getUserName())
+                                    .withText(rawTweet.getTextTweet())
+                                    .withImageUrl(changeImageUrlAddress(rawTweet.getUser().getUserImageUrl()))
+                                    .withDate(convertDate(rawTweet.getDateCreation()))
+                                    .withLikes(rawTweet.getLikesCount())
+                                    .withRetweets(rawTweet.getRetweetCount())
+                                    .build();
+                        }
+
                 );
     }
 
@@ -54,7 +67,10 @@ public class SearchInteractor implements ISearchInteractor {
         // xxx_small.jpg, xxx_normal.jpg, xxx_big.jpg, => different size of image.
         int _lastIndex = imageUrl.lastIndexOf('_');
         // original size of avatar image
-        String originalImageUrl = imageUrl.substring(0, _lastIndex) + ".jpg";
+
+        String originalImageUrl = _lastIndex != -1
+                ? imageUrl.substring(0, _lastIndex) + ".jpg"
+                : imageUrl;
 
         return originalImageUrl;
     }

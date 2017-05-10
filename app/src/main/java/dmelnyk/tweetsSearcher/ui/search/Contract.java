@@ -12,11 +12,7 @@ public class Contract {
     public interface ISearchView {
         void onHideProgress();
 
-        void onShowErrorToast(String message);
-
         void onShowErrorToast(int message);
-
-        void onChangeInputTextField(CharSequence request);
 
         void onUpdateTweets(Tweet tweets);
 
@@ -34,6 +30,5 @@ public class Contract {
         void unbindView();
 
         void loadTweets(Observable<CharSequence> observable);
-        void forwardInputData(Observable<CharSequence> observable);
     }
 }

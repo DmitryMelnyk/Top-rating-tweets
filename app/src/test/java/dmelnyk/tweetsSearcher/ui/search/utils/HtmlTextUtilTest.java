@@ -27,6 +27,7 @@ public class HtmlTextUtilTest {
         ArrayList<String> refs = HtmlTextUtil.findReferences(textWithoutRefs);
         // then
         Assert.assertEquals(refs.isEmpty(), true);
+
         // when
         refs = HtmlTextUtil.findReferences(textWithRefs);
         // then

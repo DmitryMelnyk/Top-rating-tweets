@@ -1,15 +1,16 @@
 package dmelnyk.tweetsSearcher.ui.search;
 
-import android.content.Context;
 import android.support.test.espresso.Espresso;
+import android.support.test.espresso.intent.Intents;
+import android.support.test.espresso.intent.matcher.IntentMatchers;
+import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.view.inputmethod.InputMethodManager;
+import android.support.v4.app.Fragment;
 
 import junit.framework.Assert;
 
-import org.hamcrest.CoreMatchers;
+import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,17 +20,19 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import dmelnyk.tweetsSearcher.R;
 import dmelnyk.tweetsSearcher.business.model.Tweet;
+import dmelnyk.tweetsSearcher.ui.web.WebViewActivity;
 
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.action.ViewActions.typeText;
+import static android.R.id.message;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
+import static android.support.test.espresso.intent.matcher.BundleMatchers.hasEntry;
 import static android.support.test.espresso.matcher.RootMatchers.withDecorView;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsNot.not;
 
@@ -42,7 +45,7 @@ import static org.hamcrest.core.IsNot.not;
 public class SearchActivityTest {
 
     @Rule
-    public ActivityTestRule<SearchActivity> rule = new ActivityTestRule<SearchActivity>(SearchActivity.class);
+    public IntentsTestRule<SearchActivity> rule = new IntentsTestRule<SearchActivity>(SearchActivity.class);
 
     private Tweet tweet1;
     private Tweet tweet2;
@@ -71,18 +74,20 @@ public class SearchActivityTest {
         searchActivity = rule.getActivity();
     }
 
-    @Test
-    public void initializeSearchEditText() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        // given
-        Method initializeSearchEditText = SearchActivity.class.getDeclaredMethod("initializeSearchEditText");
-        initializeSearchEditText.setAccessible(true);
-        // when
-        initializeSearchEditText.invoke(searchActivity);
-        // then
-        Espresso.onView(withId(R.id.searchField))
-                .check(matches(isDisplayed()));
-    }
+    @Test public void instantiateRetainFragment() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
+        // given:
+        Method instantiateRetainFragment = SearchActivity.class.getDeclaredMethod("instantiateRetainFragment");
+        instantiateRetainFragment.setAccessible(true);
 
+        Field TAG = SearchActivity.class.getDeclaredField("FRAGMENT_TAG");
+        TAG.setAccessible(true);
+        // when:
+        instantiateRetainFragment.invoke(searchActivity);
+        // then:
+        Fragment savedFragment = searchActivity.getSupportFragmentManager().findFragmentByTag(
+                (String) TAG.get(searchActivity));
+        Assert.assertTrue(savedFragment != null);
+    }
 
     @Test public void onSaveDataInFragment_onRestoreDataFromFragment() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
         // given
@@ -155,23 +160,23 @@ public class SearchActivityTest {
                 .check(matches(isDisplayed()));
     }
 
-    @Test public void onHideKeyboard() {
-        // given
-        InputMethodManager imm = (InputMethodManager) searchActivity
-                .getSystemService(Context.INPUT_METHOD_SERVICE);
-
-        // when
-        Espresso.onView(withId(R.id.searchField))
-                .perform(click());
-        // then
-        Assert.assertTrue(imm.isAcceptingText());
-
-        // when
-//        searchActivity.runOnUiThread(() -> onHideKeyboard());
-        // TODO: test is hanging
-        // then
+//    @Test public void onHideKeyboard() throws InterruptedException {
+//        // given
+//        InputMethodManager imm = (InputMethodManager) searchActivity
+//                .getSystemService(Context.INPUT_METHOD_SERVICE);
+//        // when
+//        Espresso.onView(ViewMatchers.withId(R.id.actionSearch))
+//                .perform(ViewActions.click());
+//        Espresso.onView(ViewMatchers.withId(android.support.v7.appcompat.R.id.search_src_text))
+//                .perform(ViewActions.typeText("some text"));
+//        // then
+//        Assert.assertTrue(imm.isAcceptingText());
+//        // when
+//        searchActivity.runOnUiThread(() -> searchActivity.onHideProgress());
+//        Assert.assertTrue(imm.isAcceptingText());
+//        searchActivity.runOnUiThread(() -> searchActivity.onHideKeyboard());
 //        Assert.assertFalse(imm.isAcceptingText());
-    }
+//    }
 
     @Test
     public void cleanRecycler() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
@@ -197,64 +202,54 @@ public class SearchActivityTest {
         Assert.assertTrue(((ArrayList<Tweet>) tweets.get(searchActivity)).isEmpty());
     }
 
-    @Test
-    public void onShowProgress() {
-        // before
-        Espresso.onView(withId(R.id.searchField))
-                .perform(typeText("text"));
 
-        Espresso.onView(withId(R.id.searchField))
-                .check(matches(isDisplayed()));
+    @Test public void onShowProgress_onHideProgress() throws NoSuchFieldException, IllegalAccessException {
+        // given
+        Field searchRequest = SearchActivity.class.getDeclaredField("searchRequest");
+        searchRequest.setAccessible(true);
+        searchRequest.set(searchActivity, "request");
+
         // when
         searchActivity.runOnUiThread(
                 () -> searchActivity.onShowProgress());
-        // TODO: how te check icon changing
+        // then
+        Awaitility.await().atLeast(300, TimeUnit.MILLISECONDS);
+        Assert.assertTrue(searchActivity.swipeRefreshLayout.isRefreshing());
+        // when
+        searchActivity.runOnUiThread(
+                () -> searchActivity.onHideProgress());
+        // then
+        Awaitility.await().atLeast(300, TimeUnit.MILLISECONDS);
+        Assert.assertFalse(searchActivity.swipeRefreshLayout.isActivated());
     }
 
-    @Test
-    public void onShowErrorToast() {
+
+    @Test public void onShowErrorToast() {
+
         // given
-        String message = "is toast";
+        String message1 = searchActivity.getString(R.string.toast_empty);
+        String message2 = searchActivity.getString(R.string.toast_empty);
+        String message3 = searchActivity.getString(R.string.toast_empty);
         // when
-        searchActivity.runOnUiThread(() -> searchActivity.onShowErrorToast(message));
+        searchActivity.runOnUiThread(() -> searchActivity.onShowErrorToast(1));
         // then
         Espresso.onView(withText(message))
                 .inRoot(withDecorView(not(is(searchActivity.getWindow().getDecorView()))))
                 .check(matches(isDisplayed()));
-    }
-
-    @Test
-    public void onChangeInputTextField() throws NoSuchFieldException, InterruptedException {
-        // given
-        CharSequence searchRequest = "#android";
-        // when
-        searchActivity.runOnUiThread(() -> searchActivity
-                .onChangeInputTextField(searchRequest));
-        // then
-        Espresso.onView(withText(searchRequest.toString()))
-                .check(matches(isDisplayed()));
 //        Thread.sleep(2000);
     }
 
-    @Test
-    public void hideSearchEditText() throws NoSuchMethodException {
-        // before
-        Espresso.onView(withId(R.id.searchField))
-                .check(matches(isDisplayed()));
+    @Test public void setReference() {
         // given
-        Method hideSearchEditText = SearchActivity.class.getDeclaredMethod("hideSearchEditText");
-        hideSearchEditText.setAccessible(true);
+        String url = "https://google.com.ua";
         // when
-        searchActivity.runOnUiThread(
-                () -> {
-                    try {
-                        hideSearchEditText.invoke(searchActivity);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                });
+
+        searchActivity.setReference(url);
+
         // then
-        Espresso.onView(withId(R.id.searchField))
-                .check(matches(CoreMatchers.not(isDisplayed())));
+        Intents.intended(IntentMatchers.hasComponent(WebViewActivity.class.getName()));
+        Intents.intended(IntentMatchers.hasExtras(hasEntry(
+                equalTo(WebViewActivity.KEY_URL), equalTo(url))
+        ));
     }
 }

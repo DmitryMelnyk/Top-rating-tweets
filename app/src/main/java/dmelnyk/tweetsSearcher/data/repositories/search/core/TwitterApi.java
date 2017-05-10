@@ -1,6 +1,8 @@
 package dmelnyk.tweetsSearcher.data.repositories.search.core;
 
 import dmelnyk.tweetsSearcher.data.network.models.response.search.raw.TweetRawObject;
+import io.reactivex.Single;
+
 import retrofit2.Call;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
@@ -22,7 +24,8 @@ public interface TwitterApi {
 
     // getting tweets
     @GET("1.1/search/tweets.json")
-    Call<TweetRawObject> searchTweets(
+
+    Single<TweetRawObject> searchTweets(
             @Query("q") String request,
             @Query("count") int count);
 }

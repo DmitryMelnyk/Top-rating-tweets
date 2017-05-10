@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Search Tweets</string>
-    <string name="bad_request">Nothing came up for that search, which is a little weird. Maybe check what you searched for and try again.</string>
+    <string name="toast_bad_request">Nothing came up for that search, which is a little weird. Maybe check what you searched for and try again.</string>
     <string name="RefDialog_title">Choose reference to go</string>
     <string name="RefDialog_negative_button">CANCEL</string>
+    <string name="toast_empty">\"Search request is empty. Please, enter some tag to search\"</string>
+    <string name="toast_no_internet">No internet connection.</string>
 </resources>
