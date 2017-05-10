@@ -58,13 +58,20 @@ public class SearchPresenter implements ISearchPresenter {
                 .flatMap(request -> searchInteractor.loadTweets(request))
                 .observeOn(rxSchedulers.getMainThreadScheduler())
                 // show tweets
+
                 .subscribe(this::displayTweets);
 
         compositeDisposable.add(disposable);
     }
 
+    private void displayErrorMessage(String errorMessage) {
+        view.onShowErrorToast(errorMessage);
+        view.onHideProgress();
+    }
+
     private void displaySearchProcessing() {
         Log.d(TAG, "displaySearchProcessing()");
+
         view.onShowProgress();
         view.initializeNonEmptyState();
         view.onHideKeyboard();
@@ -80,5 +87,6 @@ public class SearchPresenter implements ISearchPresenter {
         } else {
             view.onUpdateTweets(tweet);
         }
+
     }
 }

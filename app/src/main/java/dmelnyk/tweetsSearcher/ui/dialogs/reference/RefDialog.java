@@ -2,13 +2,13 @@ package dmelnyk.tweetsSearcher.ui.dialogs.reference;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 
 import java.util.List;
-
 import dmelnyk.tweetsSearcher.R;
 
 /**
@@ -27,6 +27,7 @@ public class RefDialog extends DialogFragment {
     private static List<String> references;
 
     public static RefDialog getInstance(List<String> references_) {
+
         references = references_;
         return new RefDialog();
     }
@@ -55,6 +56,7 @@ public class RefDialog extends DialogFragment {
                             listener.setReference(references.get(refIndex));
                         })
                 .setNegativeButton(getContext().getString(R.string.RefDialog_negative_button),
+
                         (ignore, index) -> { /* NOP */});
 
         return builder.create();

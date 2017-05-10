@@ -1,6 +1,5 @@
 package dmelnyk.tweetsSearcher.ui.search.utils;
 
-import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -16,6 +15,7 @@ import java.util.List;
 
 import dmelnyk.tweetsSearcher.R;
 import dmelnyk.tweetsSearcher.business.model.Tweet;
+
 import dmelnyk.tweetsSearcher.ui.dialogs.reference.RefDialog;
 
 /**
@@ -26,6 +26,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetHolder>
 
     private static final long ANIMATE_DURATION = 600; // duration of "hide-visible" animation in ms.
     public static final int REFERENCE_CODE = 1;
+
     private ArrayList<Tweet> dataSet;
     private View cardView;
     private AppCompatActivity context;

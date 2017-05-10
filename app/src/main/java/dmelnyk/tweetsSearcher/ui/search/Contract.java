@@ -10,7 +10,6 @@ import io.reactivex.Observable;
 public class Contract {
 
     public interface ISearchView {
-        void onShowProgress();
         void onHideProgress();
 
         void onShowErrorToast(int message);
@@ -22,6 +21,8 @@ public class Contract {
         void initializeNonEmptyState();
 
         void onHideKeyboard();
+
+        void onShowProgress();
     }
 
     public interface ISearchPresenter {

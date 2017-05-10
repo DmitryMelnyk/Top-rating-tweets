@@ -202,11 +202,13 @@ public class SearchActivityTest {
         Assert.assertTrue(((ArrayList<Tweet>) tweets.get(searchActivity)).isEmpty());
     }
 
+
     @Test public void onShowProgress_onHideProgress() throws NoSuchFieldException, IllegalAccessException {
         // given
         Field searchRequest = SearchActivity.class.getDeclaredField("searchRequest");
         searchRequest.setAccessible(true);
         searchRequest.set(searchActivity, "request");
+
         // when
         searchActivity.runOnUiThread(
                 () -> searchActivity.onShowProgress());
@@ -221,7 +223,9 @@ public class SearchActivityTest {
         Assert.assertFalse(searchActivity.swipeRefreshLayout.isActivated());
     }
 
+
     @Test public void onShowErrorToast() {
+
         // given
         String message1 = searchActivity.getString(R.string.toast_empty);
         String message2 = searchActivity.getString(R.string.toast_empty);
@@ -232,13 +236,16 @@ public class SearchActivityTest {
         Espresso.onView(withText(message))
                 .inRoot(withDecorView(not(is(searchActivity.getWindow().getDecorView()))))
                 .check(matches(isDisplayed()));
+//        Thread.sleep(2000);
     }
 
     @Test public void setReference() {
         // given
         String url = "https://google.com.ua";
         // when
+
         searchActivity.setReference(url);
+
         // then
         Intents.intended(IntentMatchers.hasComponent(WebViewActivity.class.getName()));
         Intents.intended(IntentMatchers.hasExtras(hasEntry(

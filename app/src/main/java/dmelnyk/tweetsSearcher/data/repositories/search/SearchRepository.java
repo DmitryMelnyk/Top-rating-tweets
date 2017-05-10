@@ -23,6 +23,7 @@ import dmelnyk.tweetsSearcher.data.repositories.search.core.NetworkUtil;
 import dmelnyk.tweetsSearcher.data.repositories.search.core.OAthToken;
 import dmelnyk.tweetsSearcher.data.repositories.search.core.TwitterApi;
 import dmelnyk.tweetsSearcher.ui.search.SearchActivity;
+
 import io.reactivex.Observable;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
@@ -57,6 +58,7 @@ public class SearchRepository implements ISearchRepository {
         if (!networkUtil.isNetworkReachable()) {
             Log.d(TAG, "Network is not reachable. Please, check connection!");
             return Observable.just(new SearchErrorTweetModel("Network is not reachable. Please, check connection!", SearchActivity.TOAST_CODE_NO_INTERNET_CONNECTION));
+
         }
 
         if (token == null) {
@@ -68,6 +70,7 @@ public class SearchRepository implements ISearchRepository {
                 Log.d(TAG, token.getAuthorization());
             } else {
                 return Observable.just(new SearchErrorTweetModel(response.message(), response.code()));
+
             }
         }
 
@@ -77,6 +80,7 @@ public class SearchRepository implements ISearchRepository {
     private Observable<SearchTweetModel> getTweetsModel(String request) throws IOException {
         return twitterApi.searchTweets(request, numTweets)
                 .flatMapObservable(rawObject -> Observable.fromIterable(rawObject.getTweets()));
+
     }
 
     private OkHttpClient client = new OkHttpClient.Builder()

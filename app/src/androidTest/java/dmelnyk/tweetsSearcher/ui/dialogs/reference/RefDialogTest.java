@@ -47,7 +47,9 @@ public class RefDialogTest {
 
     @Test public void testDialogShow() throws InterruptedException {
         // given
+
         RefDialog refDialog = RefDialog.getInstance(refsList);
+
         // when
         refDialog.show(rule.getActivity().getSupportFragmentManager(), "refDialog");
         // then
@@ -63,7 +65,9 @@ public class RefDialogTest {
 
     @Test public void testRunInTheWeb_clickOnFirstRef() throws InterruptedException {
         // given
+
         RefDialog refDialog = RefDialog.getInstance(refsList);
+
         // when
         refDialog.show(rule.getActivity().getSupportFragmentManager(), "refDialog");
         Espresso.onView(withText(reference1)).perform(click());
@@ -74,7 +78,9 @@ public class RefDialogTest {
 
     @Test public void testRunInTheWeb_clickOnSecondRef() {
         // given
+
         RefDialog refDialog = RefDialog.getInstance(refsList);
+
         // when
         refDialog.show(rule.getActivity().getSupportFragmentManager(), "refDialog");
         Espresso.onView(withText(reference2)).perform(click());

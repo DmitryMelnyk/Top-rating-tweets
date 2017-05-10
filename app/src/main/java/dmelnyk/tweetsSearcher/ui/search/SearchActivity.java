@@ -1,6 +1,7 @@
 package dmelnyk.tweetsSearcher.ui.search;
 
 import android.app.Activity;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
@@ -37,7 +38,6 @@ import butterknife.ButterKnife;
 import dmelnyk.tweetsSearcher.R;
 import dmelnyk.tweetsSearcher.application.MyApp;
 import dmelnyk.tweetsSearcher.business.model.Tweet;
-import dmelnyk.tweetsSearcher.ui.dialogs.reference.RefDialog;
 import dmelnyk.tweetsSearcher.ui.search.di.SearchModule;
 import dmelnyk.tweetsSearcher.ui.search.utils.RetainFragment;
 import dmelnyk.tweetsSearcher.ui.search.utils.TweetAdapter;

@@ -33,7 +33,6 @@ public class HtmlTextUtilTest {
         // then
         Assert.assertFalse(refs.isEmpty());
         Assert.assertEquals(refs.get(0), "https://www.w3schools.com/tags/tag_u.asp");
-
         // when
         refs = HtmlTextUtil.findReferences(textWithTwoReference);
         // then

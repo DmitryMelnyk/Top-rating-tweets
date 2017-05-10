@@ -11,6 +11,7 @@ public class SearchErrorTweetModel extends SearchTweetModel {
 
     public SearchErrorTweetModel(String description, int code) {
         super(null, null, 0, 0);
+
         this.description = description;
         this.code = code;
     }

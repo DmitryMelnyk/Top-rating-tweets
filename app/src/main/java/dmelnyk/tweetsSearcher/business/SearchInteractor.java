@@ -30,6 +30,7 @@ public class SearchInteractor implements ISearchInteractor {
 
         Observable<SearchTweetModel> rawTweets = getRawTweets(searchRequest.toString());
         if (rawTweets.isEmpty().blockingGet()) {
+
             // NO_TWEETS_CODE
             return Observable.just(new EmptyTweet(1));
         }
@@ -38,6 +39,7 @@ public class SearchInteractor implements ISearchInteractor {
     }
 
     protected Observable<SearchTweetModel> getRawTweets(String searchRequest) throws IOException {
+
         return iSearchRepository.getTweets(searchRequest);    }
 
     public Observable<Tweet> convertTweets(Observable<SearchTweetModel> observable) {
@@ -57,6 +59,7 @@ public class SearchInteractor implements ISearchInteractor {
                                     .withRetweets(rawTweet.getRetweetCount())
                                     .build();
                         }
+
                 );
     }
 
@@ -64,6 +67,7 @@ public class SearchInteractor implements ISearchInteractor {
         // xxx_small.jpg, xxx_normal.jpg, xxx_big.jpg, => different size of image.
         int _lastIndex = imageUrl.lastIndexOf('_');
         // original size of avatar image
+
         String originalImageUrl = _lastIndex != -1
                 ? imageUrl.substring(0, _lastIndex) + ".jpg"
                 : imageUrl;
