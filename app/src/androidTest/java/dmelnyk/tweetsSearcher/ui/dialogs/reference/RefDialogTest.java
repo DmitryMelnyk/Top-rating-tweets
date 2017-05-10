@@ -47,7 +47,7 @@ public class RefDialogTest {
 
     @Test public void testDialogShow() throws InterruptedException {
         // given
-        RefDialog refDialog = RefDialog.getInstance(rule.getActivity(), refsList);
+        RefDialog refDialog = RefDialog.getInstance(refsList);
         // when
         refDialog.show(rule.getActivity().getSupportFragmentManager(), "refDialog");
         // then
@@ -63,19 +63,18 @@ public class RefDialogTest {
 
     @Test public void testRunInTheWeb_clickOnFirstRef() throws InterruptedException {
         // given
-        RefDialog refDialog = RefDialog.getInstance(rule.getActivity(), refsList);
+        RefDialog refDialog = RefDialog.getInstance(refsList);
         // when
         refDialog.show(rule.getActivity().getSupportFragmentManager(), "refDialog");
         Espresso.onView(withText(reference1)).perform(click());
         // then
         intended(hasComponent(WebViewActivity.class.getName()));
         intended(hasExtras(hasEntry(equalTo(WebViewActivity.KEY_URL), equalTo(reference1))));
-        Thread.sleep(5000);
     }
 
     @Test public void testRunInTheWeb_clickOnSecondRef() {
         // given
-        RefDialog refDialog = RefDialog.getInstance(rule.getActivity(), refsList);
+        RefDialog refDialog = RefDialog.getInstance(refsList);
         // when
         refDialog.show(rule.getActivity().getSupportFragmentManager(), "refDialog");
         Espresso.onView(withText(reference2)).perform(click());

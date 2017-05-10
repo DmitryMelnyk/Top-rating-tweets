@@ -2,11 +2,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
 
-
-    <!--android:icon="@android:drawable/ic_menu_search"-->
     <item android:id="@+id/actionSearch"
-          android:title="Search Tweets"
-
+          android:title=""
           app:showAsAction="always"
           app:actionViewClass="android.support.v7.widget.SearchView"/>
+    <item android:id="@+id/actionRecord"
+          android:icon="@drawable/ic_menu_record"
+          app:showAsAction="always"
+          android:title=""/>
+
 </menu>

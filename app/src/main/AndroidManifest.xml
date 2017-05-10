@@ -22,9 +22,6 @@
         </activity>
         <activity android:name=".ui.web.WebViewActivity">
         </activity>
-        <activity android:name=".ui.SpeechActivity"
-                  android:exported="true">
-        </activity>
     </application>
 
 </manifest>

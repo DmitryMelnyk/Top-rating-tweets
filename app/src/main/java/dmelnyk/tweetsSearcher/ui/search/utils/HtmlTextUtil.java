@@ -3,7 +3,6 @@ package dmelnyk.tweetsSearcher.ui.search.utils;
 import android.os.Build;
 import android.text.Html;
 import android.text.Spanned;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -13,10 +12,12 @@ import java.util.ArrayList;
 
 public class HtmlTextUtil {
 
+    private HtmlTextUtil() {}
+
     public static ArrayList<String> findReferences(String text) {
         ArrayList<String> refList = new ArrayList<>();
         // splitting words ro check if them contain ref
-        String[] words = text.split(" ");
+        String[] words = text.split("\\s+");
 
         String refMatcherHttp = "http://";
         String refMatcherHttps = "https://";
@@ -27,7 +28,6 @@ public class HtmlTextUtil {
                     (words[i].startsWith(refMatcherHttp) ||
                     words[i].startsWith(refMatcherHttps))) {
                 refList.add(words[i]);
-                Log.d("228", "" + words[i] + " = " + words[i].endsWith("..."));
             }
         }
         return refList;
@@ -43,10 +43,8 @@ public class HtmlTextUtil {
             for (String ref : references) {
                 // add underline and blue color
                 String formattedRef = "<font color=#2bb1ff><u>" + ref + "</u></font>";
-                formattedText = text.replace(ref, formattedRef);
+                text = text.replace(ref, formattedRef);
             }
-
-            return formattedText;
         }
 
         return text;

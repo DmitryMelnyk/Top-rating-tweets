@@ -47,11 +47,9 @@ public class SearchPresenter implements ISearchPresenter {
     public void loadTweets(Observable<CharSequence> observable) {
 
         // Observable for text changing with debounce 1500 millis.
-        Observable<CharSequence> textChangeObservable = observable
+        Disposable disposable = observable
                 .debounce(1500, TimeUnit.MILLISECONDS)
-                .filter(text -> text.length() > 2);
-
-        Disposable disposable = textChangeObservable
+                .filter(text -> text.length() > 2)
                 // display search progress
                 .observeOn(rxSchedulers.getMainThreadScheduler())
                 .doOnNext(ignore -> displaySearchProcessing())
@@ -60,19 +58,13 @@ public class SearchPresenter implements ISearchPresenter {
                 .flatMap(request -> searchInteractor.loadTweets(request))
                 .observeOn(rxSchedulers.getMainThreadScheduler())
                 // show tweets
-                .subscribe(
-                        tweet -> displayTweets(tweet)
-                        /*error -> displayErrorMessage(error.getMessage())*/);
+                .subscribe(this::displayTweets);
 
         compositeDisposable.add(disposable);
     }
 
-    private void displayErrorMessage(String errorMessage) {
-        view.onShowErrorToast(errorMessage);
-        view.onHideProgress();
-    }
-
     private void displaySearchProcessing() {
+        Log.d(TAG, "displaySearchProcessing()");
         view.onShowProgress();
         view.initializeNonEmptyState();
         view.onHideKeyboard();
@@ -80,24 +72,13 @@ public class SearchPresenter implements ISearchPresenter {
     }
 
     private void displayTweets(Tweet tweet) {
+        Log.d(TAG, "displayTweets(). Tweet = " + tweet);
         view.onHideProgress();
 
         if (tweet instanceof EmptyTweet) {
-            view.onShowErrorToast(-1);
+            view.onShowErrorToast(((EmptyTweet) tweet).getCode());
         } else {
             view.onUpdateTweets(tweet);
         }
-    }
-
-    // forwarding text from SearchEditTextField to SearchView
-    @Override
-    public void forwardInputData(Observable<CharSequence> observable) {
-
-        compositeDisposable.add(observable
-                .filter(text -> text.length() > 2)
-                        .subscribe(
-                        searchRequest -> {
-                            Log.d(TAG, "searchRequest = " + searchRequest);
-                            view.onChangeInputTextField(searchRequest); }));
     }
 }

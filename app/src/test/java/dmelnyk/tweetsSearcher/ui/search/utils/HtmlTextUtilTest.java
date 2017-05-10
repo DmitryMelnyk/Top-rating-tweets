@@ -27,11 +27,13 @@ public class HtmlTextUtilTest {
         ArrayList<String> refs = HtmlTextUtil.findReferences(textWithoutRefs);
         // then
         Assert.assertEquals(refs.isEmpty(), true);
+
         // when
         refs = HtmlTextUtil.findReferences(textWithRefs);
         // then
         Assert.assertFalse(refs.isEmpty());
         Assert.assertEquals(refs.get(0), "https://www.w3schools.com/tags/tag_u.asp");
+
         // when
         refs = HtmlTextUtil.findReferences(textWithTwoReference);
         // then

@@ -1,37 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-
     tools:context="dmelnyk.tweetsSearcher.ui.search.SearchActivity">
 
+    <android.support.design.widget.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary">
+
+        <android.support.v7.widget.Toolbar
+            style="@style/ToolbarTheme"
+            android:id="@+id/toolbar"
+            app:layout_scrollFlags="scroll|enterAlways"/>
+    </android.support.design.widget.AppBarLayout>
 
     <ImageView
         android:src="@drawable/twitter_bird_logo_2012"
-        android:layout_centerInParent="true"
         android:alpha="0.6"
+        android:paddingTop="?attr/actionBarSize"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
-
-    <EditText
-        android:id="@+id/searchField"
-        android:layout_centerInParent="true"
-        android:background="@android:color/white"
-        android:layout_width="200dp"
-        android:padding="10dp"
-        android:layout_height="wrap_content"
-        android:hint="Enter #tags to search"
-        android:textSize="18sp"
-        android:textColor="@android:color/holo_blue_light"
-        android:imeOptions="actionSearch"
-        android:inputType="textWebEditText"/>
 
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
         android:visibility="gone"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -46,4 +44,4 @@
 
 
 
-</RelativeLayout>
+</android.support.design.widget.CoordinatorLayout>
